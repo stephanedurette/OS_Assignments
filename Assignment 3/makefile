@@ -4,11 +4,10 @@
 src = $(wildcard *.c)
 obj = $(src:.c=.o)
 
-CFLAGS = `pkg-config --cflags --libs gtk+-3.0`
 LDFLAGS = -lGL -lpng -lz -lm
 
 myprog: $(obj)
-	$(CC) -o $@ $^ $(LDFLAGS) $(CFLAGS)
+	$(CC) -o $@ $^ $(LDFLAGS)
 
 clean:
 	rm -f $(obj) myprog
