@@ -14,7 +14,6 @@ void main(int argc, char **argv){
 
 	switch(argc){
 		case 1:
-			numBytes = 160;
 			hexDump(DEFAULT_PATH, 160, 0);
 		break;
 		case 2:

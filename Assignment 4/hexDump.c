@@ -12,10 +12,10 @@ void hexDump(char* filePath, long unsigned int numBytes, int printASCII){
 		if (c == EOF) break;
 		
 		if (i % 16 == 0){
-			printf("\n%ld:\t", i);
+			printf("\n%08ld:\t", i);
 		}
 		
-		printf(" %x", fgetc(fp) & 0xff);
+		printf(" %02X", fgetc(fp) & 0xff);
 	}
 	
 	fclose(fp);
