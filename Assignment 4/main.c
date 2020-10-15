@@ -13,13 +13,13 @@ void main(int argc, char **argv){
 	switch(argc){
 		case 1:
 			numBytes = 160;
-			hexDump(DEFAULT_PATH, 160, false);
+			hexDump(DEFAULT_PATH, 160, 0);
 		break;
 		case 2:
 			bool fileExists = cfileexits(argv[1]);
 			numBytes = fileExists ? 4GB : 160;
 			path = fileExists ? argv[1] : DEFAULT_PATH;
-			hexDump(path, numBytes, false);
+			hexDump(path, numBytes, 0);
 		break;
 		default:
 		
