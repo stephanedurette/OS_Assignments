@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include "utils.h"
+#include "hexDump.h"
 
 int cfileexists(const char * filename){
     /* try to open file to read */

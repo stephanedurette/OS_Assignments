@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "hexDump.h"
+#include "utils.h"
 
 #define FOUR_GIGS 4294967296
 #define DEFAULT_PATH "/dev/urandom"
