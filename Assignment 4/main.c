@@ -33,7 +33,7 @@ void main(int argc, char **argv){
 				path = cfileexists(argv[2]) ? argv[2] : DEFAULT_PATH;
 				hexDump(path, numBytes, 1);
 			} else {
-				printf("%s", "Incorrect format use flag -h for usage options");
+				printf("%s", "\nIncorrect format, type [./myprog -h] for usage options\n");
 			}
 		
 		break;
