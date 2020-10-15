@@ -9,7 +9,7 @@
 #define DEFAULT_PATH "/dev/urandom"
 
 void main(int argc, char **argv){
-	char path[256];
+	char* path;
 	long int numBytes;
 
 	switch(argc){
@@ -18,9 +18,8 @@ void main(int argc, char **argv){
 			hexDump(DEFAULT_PATH, 160, 0);
 		break;
 		case 2:
-			int fileExists = cfileexits(argv[1]);
-			numBytes = fileExists ? FOUR_GIGS : 160;
-			path = fileExists ? argv[1] : DEFAULT_PATH;
+			numBytes = cfileexits(argv[1]) ? FOUR_GIGS : 160;
+			path = cfileexits(argv[1]) ? argv[1] : DEFAULT_PATH;
 			hexDump(path, numBytes, 0);
 		break;
 		default:
