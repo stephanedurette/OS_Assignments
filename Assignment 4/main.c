@@ -10,7 +10,7 @@
 
 void main(int argc, char **argv){
 	char* path;
-	long int numBytes;
+	long unsigned int numBytes;
 
 	switch(argc){
 		case 1:
@@ -18,8 +18,8 @@ void main(int argc, char **argv){
 			hexDump(DEFAULT_PATH, 160, 0);
 		break;
 		case 2:
-			numBytes = cfileexits(argv[1]) ? FOUR_GIGS : 160;
-			path = cfileexits(argv[1]) ? argv[1] : DEFAULT_PATH;
+			numBytes = cfileexists(argv[1]) ? 4294967296 : 160;
+			path = cfileexists(argv[1]) ? argv[1] : DEFAULT_PATH;
 			hexDump(path, numBytes, 0);
 		break;
 		default:

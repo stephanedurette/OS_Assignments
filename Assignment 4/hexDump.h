@@ -1,1 +1,1 @@
-void hexDump(char* filePath, int numBytes, int printASCII);
+void hexDump(char* filePath, long unsigned int numBytes, int printASCII);
