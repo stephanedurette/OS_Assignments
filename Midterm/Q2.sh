@@ -50,20 +50,32 @@ do
 	read MULTIPLIER FILENAME
 
 	./Q2 $MULTIPLIER $FILENAME          #execute Q2
-
+	
+	#handle error codes
 	if [ $? -eq 0 ]; then
   		echo "Script executed successfully"
+  		echo ""
 	elif [ $? -eq 1 ]; then
   		echo "Invalid argument count"
+  		echo "Please use the following format ex: with multiplier of 3 and filename of f.txt"
+  		echo "3 f.txt"
+  		echo ""
+  		echo "Press any key to exit"
+  		read
   		exit 1
 	elif [ $? -eq 2 ]; then
   		echo "Invalid file name"
+  		echo ""
+  		echo "Press any key to exit"
+  		read
   		exit 2
 	fi
 
-	cat $FILENAME
-	rm $FILENAME
+	cat $FILENAME #print contents of $FILENAME to the console
+	rm $FILENAME  #delete $FILENAME
 	
+	#allow the user to exit
+	echo ""
 	echo "Type 'quit' to exit or press [return] to continue"
 	read userInput
 	if [ "$userInput" == "quit" ]; then
