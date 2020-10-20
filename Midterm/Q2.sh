@@ -42,7 +42,33 @@ gcc Q2.c -o Q2 #Create the exe
 export MULTIPLIER
 export FILENAME
 
-echo "Enter command in the form of [MULTIPLIER] [FILENAME]"
-read MULTIPLIER FILENAME
+while true
+do
+	clear
+	
+	echo "Enter command in the form of [MULTIPLIER] [FILENAME]"
+	read MULTIPLIER FILENAME
 
-./Q2 $MULTIPLIER $FILENAME          #execute Q2
+	./Q2 $MULTIPLIER $FILENAME          #execute Q2
+
+	if [ $? -eq 0 ]; then
+  		echo "Script executed successfully"
+	elif [ $? -eq 1 ]; then
+  		echo "Invalid argument count"
+  		exit 1
+	elif [ $? -eq 2 ]; then
+  		echo "Invalid file name"
+  		exit 2
+	fi
+
+	cat $FILENAME
+	rm $FILENAME
+	
+	echo "Type 'quit' to exit or press [return] to continue"
+	read userInput
+	if [ "$userInput" == "quit" ]; then
+   		exit 0
+   	fi
+	
+done
+
