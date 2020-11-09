@@ -7,7 +7,7 @@ obj = $(src:.c=.o)
 LDFLAGS = -lGL -lpng -lz -lm
 
 myprog: $(obj)
-	$(CC) -o $@ $^ $(LDFLAGS)
+	$(CC) -pthread -o $@ $^ $(LDFLAGS)
 
 clean:
 	rm -f $(obj) myprog
