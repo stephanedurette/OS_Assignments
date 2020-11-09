@@ -6,7 +6,9 @@
 #include <unistd.h>
 
 pthread_t subjectThread;
+
 static int subjectData = -1;
+static int numberConsumed = 0;	//each new subjectData can only be consumed once by a thread
 
 pthread_t observerThreads[4];
 int observerDivisors[4] = {3, 5, 7, 25};
@@ -24,6 +26,7 @@ void *subjectFunction(void *arg){
 		pthread_mutex_lock(&lock); 	//begin critical region
 		
 		subjectData = randNum;
+		numberConsumed = 0;		//this new number has not been consumed
 		
 		pthread_mutex_unlock(&lock);	//end critical region
 	}
@@ -33,12 +36,20 @@ void *subjectFunction(void *arg){
 //Read the subjectData, if its divisible by the assigned divisor output the result. Do this 3 times then terminate 
 void *observerFunction(void *arg){
 	int divisor = *(int*)arg;
+	int observerID = divisor == 3 ? 1 : divisor == 5 ? 2 : divisor == 7 ? 3 : divisor == 25 ? 4 : -1; //observer number for clean output string
+	
 	int count = 0;
 	while(count < 3){
-		if (subjectData % divisor == 0){
-			printf("The number %d is divisible by %d\n", subjectData, divisor);
+		if (subjectData % divisor == 0 && !numberConsumed){
+			printf("Observer: %d\tNumber: %d\tDivisor: %d\tProduct: %d\n", observerID, subjectData, divisor, subjectData / divisor);
+			
+			pthread_mutex_lock(&lock); 	//begin critical region
+			
+			numberConsumed = 1;		//the new number has been consumed
+			
+			pthread_mutex_unlock(&lock);	//end critical region
+			
 			count++;
-			sleep(1);	//sleep to prevent re-reading the same number 3 times in a row, give time for the subject function to update the value
 		}
 	}
 	return NULL;
