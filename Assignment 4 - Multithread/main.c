@@ -8,7 +8,7 @@
 pthread_t subjectThread;
 
 static int subjectData = -1;
-static int numberConsumed = 0;	//each new subjectData can only be consumed once by a thread
+static int numberConsumed = 0xF;	//each new subjectData can only be consumed once per thread, represented by a 4 bit number, 1 bit per observer thread
 
 pthread_t observerThreads[4];
 int observerDivisors[4] = {3, 5, 7, 25};
@@ -37,17 +37,18 @@ void *subjectFunction(void *arg){
 void *observerFunction(void *arg){
 	int divisor = *(int*)arg;
 	int observerID = divisor == 3 ? 1 : divisor == 5 ? 2 : divisor == 7 ? 3 : divisor == 25 ? 4 : -1; //observer number for clean output string
+	int observerBit = 1 << (observerID - 1);	//observer bit of this thread, 1-2-4-8 depending on divisor 3-5-7-25
 	
 	int count = 0;
 	while(count < 3){
-		if (subjectData % divisor == 0 && !numberConsumed){
+		if (subjectData % divisor == 0 && !(numberConsumed & observerBit)){	//if the number has not been consumed by this thread and it's a valid output
 			printf("Observer: %d\tNumber: %d\tDivisor: %d\tProduct: %d\n", observerID, subjectData, divisor, subjectData / divisor);
 			
-			pthread_mutex_lock(&lock); 	//begin critical region
+			pthread_mutex_lock(&lock); 			//begin critical region
 			
-			numberConsumed = 1;		//the new number has been consumed
+			numberConsumed |= observerBit;		//the new number has been consumed by this thread
 			
-			pthread_mutex_unlock(&lock);	//end critical region
+			pthread_mutex_unlock(&lock);			//end critical region
 			
 			count++;
 		}
