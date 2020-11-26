@@ -1,1 +1,2 @@
 https://www.tutorialspoint.com/inter_process_communication/inter_process_communication_shared_memory.htm
+https://stackoverflow.com/questions/32205396/share-posix-semaphore-among-multiple-processes

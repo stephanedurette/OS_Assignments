@@ -16,9 +16,12 @@
 #define SLEEP_TIME_MICROSECONDS 250000
 #define SHM_KEY 0x1234
 
+#define SEM_NAME "/semaphore"
+#define SEM_PERMS (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP)
+#define INITIAL_VALUE 1
+
 struct shmSeg {
    char buf[BUF_SIZE];
-   sem_t mutex;
 };
 
 //int fill_buffer(char * bufptr, int size);
