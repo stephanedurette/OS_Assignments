@@ -10,6 +10,7 @@
 #include<string.h>
 #include<time.h>
 #include<semaphore.h>
+#include <fcntl.h>
 
 #define BUF_SIZE 1024
 #define NUM_BYTE_WAIT 32
@@ -26,16 +27,14 @@ struct shmSeg {
 
 //int fill_buffer(char * bufptr, int size);
 
-void fillBuffer(char* buffer, sem_t mutex){
+void fillBuffer(char* buffer, sem_t *semaphore){
 	//srand(time(NULL));
 	int i = 0;
 	
 	while(1){
-		sem_wait(&mutex);
-	
+		sem_wait(semaphore);
 		buffer[i % BUF_SIZE] = rand() % ('T' - 'A') + 'A';
-		
-		sem_post(&mutex);
+		sem_post(semaphore);
 		
 		if(i % NUM_BYTE_WAIT == 0){
 			usleep(SLEEP_TIME_MICROSECONDS);
@@ -48,14 +47,18 @@ void fillBuffer(char* buffer, sem_t mutex){
 }
 
 int main(int argc, char *argv[]) {
-   //struct shmSeg *segPtr;
+   struct shmSeg *segPtr;
    
-   struct shmSeg *segPtr = (struct shmSeg*) malloc(sizeof(struct shmSeg));
+   //init semaphore
+   sem_t *semaphore = sem_open(SEM_NAME, O_CREAT | O_EXCL, SEM_PERMS, INITIAL_VALUE);
+   if (semaphore == SEM_FAILED) {
+        perror("sem_open(3) error");
+        exit(EXIT_FAILURE);
+    }
    
-   
+   //validate shared memory
    int shmid = shmget(SHM_KEY, sizeof(struct shmSeg), 0644|IPC_CREAT);
    if (shmid == -1) {
-      printf("blah");
       perror("Shared memory");
       return 1;
    }
@@ -68,19 +71,27 @@ int main(int argc, char *argv[]) {
       return 1;
    }
    
-   sem_init(&segPtr->mutex, 1, 1); 
+   // program loop
+   fillBuffer(segPtr->buf, semaphore);
    
-   fillBuffer(segPtr->buf, segPtr->mutex);
+   //close semaphore
+   if (sem_close(semaphore) < 0) {
+        perror("sem_close(3) failed");
+        /* We ignore possible sem_unlink(3) errors here */
+        sem_unlink(SEM_NAME);
+        exit(EXIT_FAILURE);
+    }
    
+   //detach shared memory
    if (shmdt(segPtr) == -1) {
       perror("shmdt");
       return 1;
    }
-
+   
+   //close shared memory
    if (shmctl(shmid, IPC_RMID, 0) == -1) {
       perror("shmctl");
       return 1;
    }
-   
    return 0;
 }

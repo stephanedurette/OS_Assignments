@@ -8,28 +8,39 @@
 #include<stdlib.h>
 #include<unistd.h>
 #include<semaphore.h>
+#include <fcntl.h>
 
 #define BUF_SIZE 1024
 #define SHM_KEY 0x1234
+#define SEM_NAME "/semaphore"
 
 struct shmseg {
    char buf[BUF_SIZE];
-   sem_t mutex;
 };
 
-void DisplayData(char buffer[BUF_SIZE]){
+void DisplayData(char buffer[BUF_SIZE], sem_t* semaphore){
+	sem_wait(semaphore);
 	printf("%s\n", buffer);
+	sem_post(semaphore);
 	sleep(2);
 }
 
 int main(int argc, char *argv[]) {
-   int shmid;
+   
+   //init shared memory
    struct shmseg *shmp;
-   shmid = shmget(SHM_KEY, sizeof(struct shmseg), 0644|IPC_CREAT);
+   int shmid = shmget(SHM_KEY, sizeof(struct shmseg), 0644|IPC_CREAT);
    if (shmid == -1) {
       perror("Shared memory");
       return 1;
    }
+   
+   //init semaphore
+   sem_t *semaphore = sem_open(SEM_NAME, O_RDWR);
+    if (semaphore == SEM_FAILED) {
+        perror("sem_open(3) failed");
+        exit(EXIT_FAILURE);
+    }
    
    // Attach to the segment to get a pointer to it.
    shmp = shmat(shmid, NULL, 0);
@@ -39,28 +50,18 @@ int main(int argc, char *argv[]) {
    }
    
    while(1){
-   	sem_wait(&(shmp->mutex));
-   	DisplayData(shmp->buf);
-   	sem_post(&(shmp->mutex));
+   	DisplayData(shmp->buf, semaphore);
    	sleep(2);
    }
-   /*
-   while (shmp->complete != 1) {
-      printf("segment contains : \n\"%s\"\n", shmp->buf);
-      if (shmp->cnt == -1) {
-         perror("read");
-         return 1;
-      }
-      printf("Reading Process: Shared Memory: Read %d bytes\n", shmp->cnt);
-      sleep(3);
-   }
-   */
-   printf("Reading Process: Reading Done, Detaching Shared Memory\n");
+   
+   //close semaphore
+   if (sem_close(semaphore) < 0)
+        perror("sem_close(3) failed");
+   
+   //Detach shared memory
    if (shmdt(shmp) == -1) {
       perror("shmdt");
       return 1;
    }
-   
-   printf("Reading Process: Complete\n");
    return 0;
 }
