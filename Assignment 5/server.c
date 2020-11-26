@@ -48,7 +48,6 @@ int main(int argc, char *argv[]) {
    //struct shmSeg *segPtr;
    
    struct shmSeg *segPtr = (struct shmSeg*) malloc(sizeof(struct shmSeg));
-   sem_init(&segPtr->mutex, 1, 1); 
    
    
    int shmid = shmget(SHM_KEY, sizeof(struct shmSeg), 0644|IPC_CREAT);
@@ -65,6 +64,8 @@ int main(int argc, char *argv[]) {
       printf("blafdfh");
       return 1;
    }
+   
+   sem_init(&segPtr->mutex, 1, 1); 
    
    fillBuffer(segPtr->buf, segPtr->mutex);
    
