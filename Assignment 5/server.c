@@ -9,6 +9,7 @@
 #include<unistd.h>
 #include<string.h>
 #include<time.h>
+#include<semaphore.h>
 
 #define BUF_SIZE 1024
 #define NUM_BYTE_WAIT 32
@@ -17,15 +18,22 @@
 
 struct shmSeg {
    char buf[BUF_SIZE];
+   sem_t mutex;
 };
+
 //int fill_buffer(char * bufptr, int size);
 
-void fillBuffer(char* buffer){
+void fillBuffer(char* buffer, sem_t mutex){
 	//srand(time(NULL));
 	int i = 0;
 	
 	while(1){
+		sem_wait(&mutex);
+	
 		buffer[i % BUF_SIZE] = rand() % ('T' - 'A') + 'A';
+		
+		sem_post(&mutex);
+		
 		if(i % NUM_BYTE_WAIT == 0){
 			usleep(SLEEP_TIME_MICROSECONDS);
 		}
@@ -37,10 +45,15 @@ void fillBuffer(char* buffer){
 }
 
 int main(int argc, char *argv[]) {
-   struct shmSeg *segPtr;
+   //struct shmSeg *segPtr;
+   
+   struct shmSeg *segPtr = (struct shmSeg*) malloc(sizeof(struct shmSeg));
+   sem_init(&segPtr->mutex, 1, 1); 
+   
    
    int shmid = shmget(SHM_KEY, sizeof(struct shmSeg), 0644|IPC_CREAT);
    if (shmid == -1) {
+      printf("blah");
       perror("Shared memory");
       return 1;
    }
@@ -49,23 +62,11 @@ int main(int argc, char *argv[]) {
    segPtr = shmat(shmid, NULL, 0);
    if (segPtr == (void *) -1) {
       perror("Shared memory attach");
+      printf("blafdfh");
       return 1;
    }
    
-   fillBuffer(segPtr->buf);
-   /* 
-   bufptr = shmp->buf;
-   spaceavailable = BUF_SIZE;
-   for (numtimes = 0; numtimes < 5; numtimes++) {
-      shmp->cnt = fill_buffer(bufptr, spaceavailable);
-      shmp->complete = 0;
-      printf("Writing Process: Shared Memory Write: Wrote %d bytes\n", shmp->cnt);
-      bufptr = shmp->buf;
-      spaceavailable = BUF_SIZE;
-      sleep(3);
-   }
-   printf("Writing Process: Wrote %d times\n", numtimes);
-   */
+   fillBuffer(segPtr->buf, segPtr->mutex);
    
    if (shmdt(segPtr) == -1) {
       perror("shmdt");
@@ -79,26 +80,3 @@ int main(int argc, char *argv[]) {
    
    return 0;
 }
-/*
-int fill_buffer(char * bufptr, int size) {
-   static char ch = 'A';
-   int filled_count;
-   
-   //printf("size is %d\n", size);
-   memset(bufptr, ch, size - 1);
-   bufptr[size-1] = '\0';
-   if (ch > 122)
-   ch = 65;
-   if ( (ch >= 65) && (ch <= 122) ) {
-      if ( (ch >= 91) && (ch <= 96) ) {
-         ch = 65;
-      }
-   }
-   filled_count = strlen(bufptr);
-   
-   //printf("buffer count is: %d\n", filled_count);
-   //printf("buffer filled is:%s\n", bufptr);
-   ch++;
-   return filled_count;
-}
-*/

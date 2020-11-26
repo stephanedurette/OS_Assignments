@@ -6,16 +6,21 @@
 #include<string.h>
 #include<errno.h>
 #include<stdlib.h>
-#include <unistd.h>
+#include<unistd.h>
+#include<semaphore.h>
 
 #define BUF_SIZE 1024
 #define SHM_KEY 0x1234
 
 struct shmseg {
-   int cnt;
-   int complete;
    char buf[BUF_SIZE];
+   sem_t mutex;
 };
+
+void DisplayData(char buffer[BUF_SIZE]){
+	printf("%s\n", buffer);
+	sleep(2);
+}
 
 int main(int argc, char *argv[]) {
    int shmid;
@@ -33,7 +38,13 @@ int main(int argc, char *argv[]) {
       return 1;
    }
    
-   /* Transfer blocks of data from shared memory to stdout*/
+   while(1){
+   	sem_wait(&(shmp->mutex));
+   	DisplayData(shmp->buf);
+   	sem_post(&(shmp->mutex));
+   	sleep(2);
+   }
+   /*
    while (shmp->complete != 1) {
       printf("segment contains : \n\"%s\"\n", shmp->buf);
       if (shmp->cnt == -1) {
@@ -43,11 +54,13 @@ int main(int argc, char *argv[]) {
       printf("Reading Process: Shared Memory: Read %d bytes\n", shmp->cnt);
       sleep(3);
    }
+   */
    printf("Reading Process: Reading Done, Detaching Shared Memory\n");
    if (shmdt(shmp) == -1) {
       perror("shmdt");
       return 1;
    }
+   
    printf("Reading Process: Complete\n");
    return 0;
 }
