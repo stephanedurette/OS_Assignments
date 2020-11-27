@@ -1,4 +1,3 @@
-/* Filename: server.c */
 #include<stdio.h>
 #include<sys/ipc.h>
 #include<sys/shm.h>
@@ -11,6 +10,7 @@
 #include<time.h>
 #include<semaphore.h>
 #include <fcntl.h>
+#include<signal.h>
 
 #define BUF_SIZE 1024
 #define NUM_BYTE_WAIT 32
@@ -25,32 +25,46 @@ struct shmSeg {
    char buf[BUF_SIZE];
 };
 
-//int fill_buffer(char * bufptr, int size);
+int running = 1;
 
+void sig_handler(int signo)
+{
+  if (signo == SIGINT)
+    printf("received SIGINT\n");
+    running = 0;
+}
+
+//fill ring buffer with random chars while running
 void fillBuffer(char* buffer, sem_t *semaphore){
-	//srand(time(NULL));
+	system("@cls||clear");
+	printf("-- Ring Buffer Contents --\n\nnothing yet\n\n");
+   
 	int i = 0;
 	
-	while(1){
+	while(running){
 		sem_wait(semaphore);
-		buffer[i % BUF_SIZE] = rand() % ('T' - 'A') + 'A';
+		buffer[i % BUF_SIZE] = rand() % ('T' - 'A' + 1) + 'A';
 		sem_post(semaphore);
 		
-		if(i % NUM_BYTE_WAIT == 0){
+		if(i % NUM_BYTE_WAIT == 0 && i > 0){
 			usleep(SLEEP_TIME_MICROSECONDS);
+			system("@cls||clear");
+			printf("-- Ring Buffer Contents --\n\n%s\n\n", buffer);
 		}
-		if(i % 1024 == 0 && i > 0){
-			printf("Output:\t%s\n\n", buffer);
-		}
+		
 		i++;	
 	}
 }
 
 int main(int argc, char *argv[]) {
+   //handle signals
+   if (signal(SIGINT, sig_handler) == SIG_ERR)
+  		printf("\ncan't catch SIGINT\n");
+
    struct shmSeg *segPtr;
    
    //init semaphore
-   sem_t *semaphore = sem_open(SEM_NAME, O_CREAT | O_EXCL, SEM_PERMS, INITIAL_VALUE);
+   sem_t *semaphore = sem_open(SEM_NAME, O_CREAT, SEM_PERMS, INITIAL_VALUE);
    if (semaphore == SEM_FAILED) {
         perror("sem_open(3) error");
         exit(EXIT_FAILURE);
@@ -79,7 +93,7 @@ int main(int argc, char *argv[]) {
         perror("sem_close(3) failed");
         /* We ignore possible sem_unlink(3) errors here */
         sem_unlink(SEM_NAME);
-        exit(EXIT_FAILURE);
+        //exit(EXIT_FAILURE);
     }
    
    //detach shared memory
@@ -93,5 +107,6 @@ int main(int argc, char *argv[]) {
       perror("shmctl");
       return 1;
    }
+   
    return 0;
 }
