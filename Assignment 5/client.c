@@ -72,13 +72,13 @@ int main(int argc, char *argv[]) {
    
    //init shared memory
    struct shmseg *shmp;
-   int shmid = shmget(SHM_KEY, sizeof(struct shmseg), 0644|IPC_CREAT);
+   int shmid = shmget(SHM_KEY, sizeof(struct shmseg), 0644);
    
    //try to connect, launch server and retry, then exit
    if (shmid == -1) {
-	system("./server");
+	system("gnome-terminal --command=\"./server\"");
     	sleep(1);
-    	shmid = shmget(SHM_KEY, sizeof(struct shmseg), 0644|IPC_CREAT);
+    	shmid = shmget(SHM_KEY, sizeof(struct shmseg), 0644);
     	
     	if(shmid == -1){
     		printf("client/server suite not working");
