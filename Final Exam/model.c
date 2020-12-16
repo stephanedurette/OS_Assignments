@@ -1,10 +1,10 @@
 #include <stdio.h> 
 #include <sys/types.h> 
 #include <unistd.h>
-
+#include <stdlib.h>
 #include <sys/ipc.h> 
 #include <sys/shm.h> 
-
+#include <string.h>
 typedef struct ModelData {
     int data[20];
     float mean;
@@ -13,6 +13,8 @@ typedef struct ModelData {
     int max;
     int updated;
 } ModelData;
+
+int fd[2];
 
 void updateModelData(int values[20] , ModelData* m){
 	m->mean = 0;
@@ -63,8 +65,14 @@ void model(pid_t view, pid_t controller){
 	int buffer[20]; 
 	for(int i = 0; i < 20; i++) buffer[i] = 0;
 	
-	updateModelData(buffer, m);
+	while(1){
+		char buff[512];
+		close(fd[1]);
+		read(fd[0], buff, 512);
+		
 	
+		updateModelData(buffer, m);
+	}
 	//detach from shared memory
 	shmdt(m);
 }
@@ -88,13 +96,25 @@ void view(){
 }
 
 void controller(){
-	printf("controlling");
+	while(1){
+		char input[512];
+		int value = 1000;
+		while (value > 999 || value < -999){
+			printf("Enter an integer value between -999 and 999: ");
+			scanf("%d", &value) == 1;
+		}
+
+		close(fd[0]);
+		write(fd[1], input, 512);
+	
+	}
 }
 
 int main(void){
-
+	pipe(fd);
 	pid_t view_pid, controller_pid;
 	view_pid = fork();
+	
 	if (view_pid == 0){ //view process
 		view();
 	} else{
