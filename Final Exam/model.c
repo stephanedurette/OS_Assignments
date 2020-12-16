@@ -2,20 +2,26 @@
 #include <sys/types.h> 
 #include <unistd.h>
 
+#include <sys/ipc.h> 
+#include <sys/shm.h> 
+
 typedef struct ModelData {
+    int data[20];
     float mean;
     int mode;
     int min;
     int max;
+    int updated;
 } ModelData;
-
-ModelData modelData;
 
 void updateModelData(int values[20] , ModelData* m){
 	m->mean = 0;
 	m->min = 1000;
 	m->max = -1000;
 	m->mode = 0;
+	
+	for(int i = 0; i < 20; i++) m->data[i] = values[i];
+	
 	char occurences[2000];
 	for(int i = 0; i < 2000; i++) occurences[i] = 0;
 	
@@ -34,24 +40,51 @@ void updateModelData(int values[20] , ModelData* m){
 			m->mode = i - 999;
 		}
 	}
+	m->updated = 1;
 }
 
 void displayModelData(ModelData* m){
-	printf("Mean:\t%f\nMode:\t%d\nMin:\t%d\nMax:\t%d\n", m->mean, m->mode, m->min, m->max);
+	printf("\n\nMean:\t%f\nMode:\t%d\nMin:\t%d\nMax:\t%d\nBuffer Data:\t[", m->mean, m->mode, m->min, m->max);
+	for(int i = 0; i < 20; i++){
+		printf("%d ", m->data[i]);
+	}
+	printf("]\n");
 }
 
 void model(pid_t view, pid_t controller){
+	//model-view shared memory
+	key_t key = ftok("shmfile",65);
+	int shmid = shmget(key,1024,0666|IPC_CREAT);
+	ModelData* m = (ModelData*) shmat(shmid,(void*)0,0);
+	
 	printf("view process id: %d\n", view);
 	printf("controller process id: %d\n", controller);
 	
-	int buffer[20] = {12, 11, 10, 12, 12, 12,11, 6, 7, 2, 1, 3, 4,5,6,7,8,9,2 , 20};
+	int buffer[20]; 
+	for(int i = 0; i < 20; i++) buffer[i] = 0;
 	
-	updateModelData(buffer, &modelData);
-	displayModelData(&modelData);
+	updateModelData(buffer, m);
+	
+	//detach from shared memory
+	shmdt(m);
 }
 
 void view(){
-	printf("viewing");
+	//model-view shared memory
+	key_t key = ftok("shmfile",65);
+	int shmid = shmget(key,1024,0666|IPC_CREAT);
+	ModelData* m = (ModelData*) shmat(shmid,(void*)0,0);
+	
+	
+	while(1){
+		if (m->updated == 1){
+			displayModelData(m);
+			m->updated = 0;
+		}
+	}
+	
+	//detach from shared memory
+	shmdt(m);
 }
 
 void controller(){
@@ -59,6 +92,7 @@ void controller(){
 }
 
 int main(void){
+
 	pid_t view_pid, controller_pid;
 	view_pid = fork();
 	if (view_pid == 0){ //view process
