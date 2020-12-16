@@ -1,20 +1,32 @@
-#include<stdio.h>
-#include<sys/ipc.h>
-#include<sys/shm.h>
-#include<sys/types.h>
-#include<string.h>
-#include<errno.h>
-#include<stdlib.h>
-#include<unistd.h>
-#include<semaphore.h>
-#include<fcntl.h>
-#include<signal.h>
+#include <stdio.h> 
+#include <sys/types.h> 
+#include <unistd.h>
 
-#define BUF_SIZE 1024
-#define SHM_KEY 0x1234
-#define SEM_NAME "/semaphore"
+void model(pid_t view, pid_t controller){
+	printf("view process id: %d\n", view);
+	printf("controller process id: %d\n", controller);
+}
+
+void view(){
+	printf("viewing");
+}
+
+void controller(){
+	printf("controlling");
+}
 
 int main(void){
-	
+	pid_t view_pid, controller_pid;
+	view_pid = fork();
+	if (view_pid == 0){ //view process
+		view();
+	} else{
+		controller_pid = fork();
+		if(controller_pid == 0){ //controller process
+			controller();
+		} else {
+			model(view_pid, controller_pid); //model process
+		}
+	}
 	return 0;
 }
