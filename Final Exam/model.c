@@ -95,7 +95,7 @@ void view(){
 	shmdt(m);
 }
 
-void controller(){
+void controller(){//f
 	while(1){
 		char input[512];
 		int value = 1000;
