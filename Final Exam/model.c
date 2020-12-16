@@ -5,6 +5,8 @@
 #include <sys/ipc.h> 
 #include <sys/shm.h> 
 #include <string.h>
+
+
 typedef struct ModelData {
     int data[20];
     float mean;
@@ -63,6 +65,7 @@ void model(pid_t view, pid_t controller){
 	printf("controller process id: %d\n", controller);
 	
 	int buffer[20]; 
+	int currentPos = 0;
 	for(int i = 0; i < 20; i++) buffer[i] = 0;
 	
 	while(1){
@@ -70,6 +73,10 @@ void model(pid_t view, pid_t controller){
 		close(fd[1]);
 		read(fd[0], buff, 512);
 		
+		int value = atoi(buff);
+		printf("VAL %d", value);
+		buffer[currentPos] = value;
+		currentPos = (currentPos + 1) % 20;
 	
 		updateModelData(buffer, m);
 	}
@@ -95,17 +102,17 @@ void view(){
 	shmdt(m);
 }
 
-void controller(){//f
+void controller(){
 	while(1){
-		char input[512];
 		int value = 1000;
 		while (value > 999 || value < -999){
 			printf("Enter an integer value between -999 and 999: ");
-			scanf("%d", &value) == 1;
+			scanf("%d", &value);
 		}
-
+		char msg[512];
+		snprintf(msg, 512, "%d", value);
 		close(fd[0]);
-		write(fd[1], input, 512);
+		write(fd[1], msg, 512); //int snprintf ( char * s, size_t n, const char * format, ... );
 	
 	}
 }
