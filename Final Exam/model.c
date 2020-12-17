@@ -44,10 +44,10 @@ void updateModelData(int values[20] , ModelData* m){
 			m->mode = i - 999;
 		}
 	}
-	m->updated = 1;
 }
 
 void displayModelData(ModelData* m){
+	system("clear");
 	printf("\n\nMean:\t%f\nMode:\t%d\nMin:\t%d\nMax:\t%d\nBuffer Data:\t[", m->mean, m->mode, m->min, m->max);
 	for(int i = 0; i < 20; i++){
 		printf("%d ", m->data[i]);
@@ -78,7 +78,9 @@ void model(pid_t view, pid_t controller){
 		buffer[currentPos] = value;
 		currentPos = (currentPos + 1) % 20;
 	
+		while(m->updated != 0);
 		updateModelData(buffer, m);
+		m->updated = 1;
 	}
 	//detach from shared memory
 	shmdt(m);
@@ -92,10 +94,10 @@ void view(){
 	
 	
 	while(1){
-		if (m->updated == 1){
-			displayModelData(m);
-			m->updated = 0;
-		}
+		while(m->updated != 1);
+		displayModelData(m);
+		m->updated = 0;
+		
 	}
 	
 	//detach from shared memory
@@ -108,11 +110,13 @@ void controller(){
 		while (value > 999 || value < -999){
 			printf("Enter an integer value between -999 and 999: ");
 			scanf("%d", &value);
+			fflush(stdin);
 		}
 		char msg[512];
 		snprintf(msg, 512, "%d", value);
 		close(fd[0]);
-		write(fd[1], msg, 512); //int snprintf ( char * s, size_t n, const char * format, ... );
+		write(fd[1], msg, 512);
+		sleep(1);
 	
 	}
 }
